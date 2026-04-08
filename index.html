@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quicher</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#e94560">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Quicher">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #1a1a2e;
+      --surface: #16213e;
+      --card: #0f3460;
+      --accent: #e94560;
+      --accent2: #53c0f0;
+      --text: #eaeaea;
+      --muted: #8892b0;
+      --border: #233554;
+      --success: #64ffda;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    header span {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    nav {
+      background: var(--surface);
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+
+    nav button {
+      flex: 1;
+      padding: 12px 8px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    nav button.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    nav button:hover:not(.active) {
+      color: var(--text);
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .tab { display: none; }
+    .tab.active { display: block; }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent2);
+    }
+
+    select option { background: var(--card); }
+
+    .field { margin-bottom: 14px; }
+
+    .row { display: flex; gap: 12px; }
+    .row .field { flex: 1; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn:hover { opacity: 0.9; }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+    .btn-success { background: var(--success); color: #0a0a0a; }
+    .btn-info { background: var(--accent2); color: #0a0a0a; }
+
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+    .output-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    #qr-output, #bc-output {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 16px;
+      display: none;
+    }
+
+    #qr-output canvas, #qr-output img { display: block; }
+
+    .size-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .size-row label { margin: 0; }
+
+    .size-btn {
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .size-btn.active {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    /* Scan tab */
+    #scan-video-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #000;
+      aspect-ratio: 1;
+      display: none;
+    }
+
+    #scan-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .scan-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .scan-frame {
+      width: 60%;
+      height: 60%;
+      border: 3px solid var(--accent);
+      border-radius: 8px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.4);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { border-color: var(--accent); }
+      50% { border-color: var(--accent2); }
+    }
+
+    #scan-result {
+      display: none;
+      background: var(--card);
+      border: 1px solid var(--success);
+      border-radius: var(--radius);
+      padding: 16px;
+      word-break: break-all;
+    }
+
+    #scan-result .result-label {
+      font-size: 0.75rem;
+      color: var(--success);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    #scan-result .result-value {
+      font-size: 1rem;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    #scan-canvas { display: none; }
+
+    .hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 8px 0;
+    }
+
+    .error {
+      color: #ff6b6b;
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 480px) {
+      main { padding: 12px; }
+      .row { flex-direction: column; gap: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+    <rect x="2" y="2" width="12" height="12" rx="2" fill="#e94560"/>
+    <rect x="18" y="2" width="12" height="12" rx="2" fill="#e94560"/>
+    <rect x="2" y="18" width="12" height="12" rx="2" fill="#e94560"/>
+    <rect x="5" y="5" width="6" height="6" rx="1" fill="#1a1a2e"/>
+    <rect x="21" y="5" width="6" height="6" rx="1" fill="#1a1a2e"/>
+    <rect x="5" y="21" width="6" height="6" rx="1" fill="#1a1a2e"/>
+    <rect x="18" y="18" width="4" height="4" rx="1" fill="#53c0f0"/>
+    <rect x="24" y="18" width="6" height="4" rx="1" fill="#53c0f0"/>
+    <rect x="18" y="24" width="6" height="6" rx="1" fill="#53c0f0"/>
+    <rect x="26" y="24" width="4" height="6" rx="1" fill="#53c0f0"/>
+  </svg>
+  <div>
+    <h1>Quicher</h1>
+    <span>QR &amp; Barcode Toolchest</span>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="switchTab('qr')">Generate QR</button>
+  <button onclick="switchTab('bc')">Generate Barcode</button>
+  <button onclick="switchTab('scan')">Scan</button>
+</nav>
+
+<main>
+
+  <!-- QR Generator Tab -->
+  <div id="tab-qr" class="tab active">
+    <div class="card">
+      <h2>QR Code Type</h2>
+      <div class="field">
+        <label>Type</label>
+        <select id="qr-type" onchange="renderQRForm()">
+          <option value="url">URL</option>
+          <option value="text">Plain Text</option>
+          <option value="wifi">WiFi</option>
+          <option value="vcard">Contact (vCard)</option>
+          <option value="email">Email</option>
+          <option value="sms">SMS</option>
+          <option value="phone">Phone Number</option>
+        </select>
+      </div>
+      <div id="qr-form"></div>
+    </div>
+
+    <div class="card">
+      <h2>Output</h2>
+      <div class="output-area">
+        <div class="size-row">
+          <label>Size:</label>
+          <button class="size-btn" onclick="setSize(200)">200px</button>
+          <button class="size-btn active" onclick="setSize(400)">400px</button>
+          <button class="size-btn" onclick="setSize(800)">800px</button>
+          <button class="size-btn" onclick="setSize(1200)">1200px</button>
+        </div>
+        <div id="qr-output"><canvas id="qr-canvas"></canvas></div>
+        <div id="qr-error" class="error"></div>
+        <div class="btn-group" id="qr-download-btns" style="display:none">
+          <button class="btn btn-success" onclick="downloadQR('png')">Download PNG</button>
+          <button class="btn btn-info" onclick="downloadQR('svg')">Download SVG</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barcode Generator Tab -->
+  <div id="tab-bc" class="tab">
+    <div class="card">
+      <h2>Barcode</h2>
+      <div class="field">
+        <label>Format</label>
+        <select id="bc-format" onchange="generateBarcode()">
+          <option value="CODE128">Code 128 (general purpose)</option>
+          <option value="CODE39">Code 39</option>
+          <option value="EAN13">EAN-13</option>
+          <option value="EAN8">EAN-8</option>
+          <option value="UPC">UPC-A</option>
+          <option value="ITF14">ITF-14</option>
+          <option value="MSI">MSI</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Value</label>
+        <input id="bc-value" type="text" placeholder="Enter value..." oninput="generateBarcode()">
+        <div id="bc-hint" class="hint"></div>
+        <div id="bc-error" class="error"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Output</h2>
+      <div class="output-area">
+        <div id="bc-output"><svg id="bc-svg"></svg></div>
+        <div class="btn-group" id="bc-download-btns" style="display:none">
+          <button class="btn btn-success" onclick="downloadBarcode('png')">Download PNG</button>
+          <button class="btn btn-info" onclick="downloadBarcode('svg')">Download SVG</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scan Tab -->
+  <div id="tab-scan" class="tab">
+    <div class="card">
+      <h2>Scan QR or Barcode</h2>
+      <div class="btn-group">
+        <button class="btn btn-primary" id="cam-btn" onclick="toggleCamera()">Start Camera</button>
+        <label class="btn btn-secondary" style="cursor:pointer">
+          Upload Image <input type="file" accept="image/*" style="display:none" onchange="scanFile(this)">
+        </label>
+      </div>
+      <p class="hint" style="margin-top:12px">Camera scanning requires HTTPS or localhost</p>
+    </div>
+
+    <div id="scan-video-wrap">
+      <video id="scan-video" autoplay playsinline muted></video>
+      <div class="scan-overlay"><div class="scan-frame"></div></div>
+    </div>
+
+    <canvas id="scan-canvas"></canvas>
+
+    <div id="scan-result">
+      <div class="result-label">Decoded</div>
+      <div class="result-value" id="scan-value"></div>
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="copyResult()">Copy</button>
+        <button class="btn btn-primary" id="open-url-btn" style="display:none" onclick="openResult()">Open URL</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="js/qrcode.min.js"></script>
+<script src="js/jsbarcode.all.min.js"></script>
+<script src="js/jsqr.js"></script>
+<script>
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('nav button')[['qr','bc','scan'].indexOf(name)].classList.add('active');
+  if (name !== 'scan') stopCamera();
+}
+
+// ── QR Generator ─────────────────────────────────────────────────────────────
+let qrSize = 400;
+let qrDebounce;
+
+function setSize(s) {
+  qrSize = s;
+  document.querySelectorAll('.size-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === s + 'px');
+  });
+  generateQR();
+}
+
+const QR_FORMS = {
+  url: `
+    <div class="field">
+      <label>URL</label>
+      <input id="qf-url" type="url" placeholder="https://example.com" oninput="scheduleQR()">
+    </div>`,
+  text: `
+    <div class="field">
+      <label>Text</label>
+      <textarea id="qf-text" rows="3" placeholder="Enter any text..." oninput="scheduleQR()"></textarea>
+    </div>`,
+  wifi: `
+    <div class="field"><label>Network Name (SSID)</label><input id="qf-ssid" placeholder="MyNetwork" oninput="scheduleQR()"></div>
+    <div class="field"><label>Password</label><input id="qf-pass" type="password" placeholder="Password" oninput="scheduleQR()"></div>
+    <div class="row">
+      <div class="field">
+        <label>Encryption</label>
+        <select id="qf-enc" onchange="scheduleQR()">
+          <option value="WPA">WPA/WPA2</option>
+          <option value="WEP">WEP</option>
+          <option value="nopass">None</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Hidden Network?</label>
+        <select id="qf-hidden" onchange="scheduleQR()">
+          <option value="false">No</option>
+          <option value="true">Yes</option>
+        </select>
+      </div>
+    </div>`,
+  vcard: `
+    <div class="row">
+      <div class="field"><label>First Name</label><input id="qf-fname" oninput="scheduleQR()"></div>
+      <div class="field"><label>Last Name</label><input id="qf-lname" oninput="scheduleQR()"></div>
+    </div>
+    <div class="field"><label>Organization</label><input id="qf-org" oninput="scheduleQR()"></div>
+    <div class="field"><label>Phone</label><input id="qf-tel" type="tel" oninput="scheduleQR()"></div>
+    <div class="field"><label>Email</label><input id="qf-email" type="email" oninput="scheduleQR()"></div>
+    <div class="field"><label>Website</label><input id="qf-web" type="url" placeholder="https://" oninput="scheduleQR()"></div>
+    <div class="field"><label>Address</label><input id="qf-addr" oninput="scheduleQR()"></div>`,
+  email: `
+    <div class="field"><label>To</label><input id="qf-to" type="email" placeholder="someone@example.com" oninput="scheduleQR()"></div>
+    <div class="field"><label>Subject</label><input id="qf-subj" oninput="scheduleQR()"></div>
+    <div class="field"><label>Body</label><textarea id="qf-body" rows="3" oninput="scheduleQR()"></textarea></div>`,
+  sms: `
+    <div class="field"><label>Phone Number</label><input id="qf-smsnum" type="tel" placeholder="+15551234567" oninput="scheduleQR()"></div>
+    <div class="field"><label>Message</label><textarea id="qf-smsmsg" rows="3" oninput="scheduleQR()"></textarea></div>`,
+  phone: `
+    <div class="field"><label>Phone Number</label><input id="qf-phone" type="tel" placeholder="+15551234567" oninput="scheduleQR()"></div>`
+};
+
+function renderQRForm() {
+  const type = document.getElementById('qr-type').value;
+  document.getElementById('qr-form').innerHTML = QR_FORMS[type];
+  clearQR();
+}
+
+function getQRValue() {
+  const type = document.getElementById('qr-type').value;
+  const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  switch (type) {
+    case 'url':   return v('qf-url');
+    case 'text':  return v('qf-text');
+    case 'wifi':  {
+      const ssid = v('qf-ssid'), pass = v('qf-pass');
+      const enc = v('qf-enc'), hidden = v('qf-hidden');
+      if (!ssid) return '';
+      return `WIFI:T:${enc};S:${escape_wifi(ssid)};P:${escape_wifi(pass)};H:${hidden};;`;
+    }
+    case 'vcard': {
+      const fn = [v('qf-fname'), v('qf-lname')].filter(Boolean).join(' ');
+      if (!fn) return '';
+      let vc = `BEGIN:VCARD\nVERSION:3.0\nN:${v('qf-lname')};${v('qf-fname')};;;\nFN:${fn}\n`;
+      if (v('qf-org'))   vc += `ORG:${v('qf-org')}\n`;
+      if (v('qf-tel'))   vc += `TEL:${v('qf-tel')}\n`;
+      if (v('qf-email')) vc += `EMAIL:${v('qf-email')}\n`;
+      if (v('qf-web'))   vc += `URL:${v('qf-web')}\n`;
+      if (v('qf-addr'))  vc += `ADR:;;${v('qf-addr')};;;;\n`;
+      vc += 'END:VCARD';
+      return vc;
+    }
+    case 'email': {
+      const to = v('qf-to');
+      if (!to) return '';
+      let m = `mailto:${to}`;
+      const params = [];
+      if (v('qf-subj')) params.push('subject=' + encodeURIComponent(v('qf-subj')));
+      if (v('qf-body'))  params.push('body=' + encodeURIComponent(v('qf-body')));
+      if (params.length) m += '?' + params.join('&');
+      return m;
+    }
+    case 'sms': {
+      const num = v('qf-smsnum');
+      if (!num) return '';
+      return `SMSTO:${num}:${v('qf-smsmsg')}`;
+    }
+    case 'phone': {
+      const p = v('qf-phone');
+      return p ? `tel:${p}` : '';
+    }
+  }
+  return '';
+}
+
+function escape_wifi(s) {
+  return s.replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/:/g,'\\:');
+}
+
+function scheduleQR() {
+  clearTimeout(qrDebounce);
+  qrDebounce = setTimeout(generateQR, 250);
+}
+
+function clearQR() {
+  document.getElementById('qr-output').style.display = 'none';
+  document.getElementById('qr-download-btns').style.display = 'none';
+  document.getElementById('qr-error').textContent = '';
+}
+
+function generateQR() {
+  const value = getQRValue();
+  const errEl = document.getElementById('qr-error');
+  errEl.textContent = '';
+  if (!value) { clearQR(); return; }
+
+  const canvas = document.getElementById('qr-canvas');
+  try {
+    const qr = qrcode(0, 'M');
+    qr.addData(value);
+    qr.make();
+    const modules = qr.getModuleCount();
+    const cellSize = Math.floor(qrSize / modules);
+    const actualSize = cellSize * modules;
+    canvas.width = actualSize;
+    canvas.height = actualSize;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, actualSize, actualSize);
+    ctx.fillStyle = '#000000';
+    for (let r = 0; r < modules; r++) {
+      for (let c = 0; c < modules; c++) {
+        if (qr.isDark(r, c)) {
+          ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+    document.getElementById('qr-output').style.display = 'block';
+    document.getElementById('qr-download-btns').style.display = 'flex';
+  } catch(e) {
+    errEl.textContent = 'Error: ' + e.message;
+    clearQR();
+  }
+}
+
+function downloadQR(fmt) {
+  const value = getQRValue();
+  if (!fmt || !value) return;
+  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+
+  if (fmt === 'png') {
+    const canvas = document.getElementById('qr-canvas');
+    const a = document.createElement('a');
+    a.download = `quicher-qr-${ts}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  } else {
+    // Build SVG from qrcode lib
+    const qr = qrcode(0, 'M');
+    qr.addData(value);
+    qr.make();
+    const n = qr.getModuleCount();
+    const cell = 10;
+    const size = n * cell;
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">`;
+    svg += `<rect width="${size}" height="${size}" fill="white"/>`;
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (qr.isDark(r, c)) {
+          svg += `<rect x="${c*cell}" y="${r*cell}" width="${cell}" height="${cell}" fill="black"/>`;
+        }
+      }
+    }
+    svg += '</svg>';
+    const blob = new Blob([svg], {type:'image/svg+xml'});
+    const a = document.createElement('a');
+    a.download = `quicher-qr-${ts}.svg`;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+}
+
+// ── Barcode Generator ─────────────────────────────────────────────────────────
+const BC_HINTS = {
+  CODE128: 'Any text or numbers',
+  CODE39: 'A-Z, 0-9, space, - . $ / + %',
+  EAN13: 'Exactly 12 or 13 digits',
+  EAN8: 'Exactly 7 or 8 digits',
+  UPC: 'Exactly 11 or 12 digits',
+  ITF14: '14 digits',
+  MSI: 'Numbers only'
+};
+
+let bcDebounce;
+
+function generateBarcode() {
+  const fmt = document.getElementById('bc-format').value;
+  const val = document.getElementById('bc-value').value.trim();
+  const errEl = document.getElementById('bc-error');
+  const hintEl = document.getElementById('bc-hint');
+  hintEl.textContent = BC_HINTS[fmt] || '';
+  errEl.textContent = '';
+
+  const output = document.getElementById('bc-output');
+  const btns = document.getElementById('bc-download-btns');
+
+  if (!val) { output.style.display = 'none'; btns.style.display = 'none'; return; }
+
+  clearTimeout(bcDebounce);
+  bcDebounce = setTimeout(() => {
+    try {
+      JsBarcode('#bc-svg', val, {
+        format: fmt,
+        width: 2,
+        height: 100,
+        displayValue: true,
+        background: '#ffffff',
+        lineColor: '#000000',
+        margin: 16,
+        fontSize: 16
+      });
+      output.style.display = 'block';
+      btns.style.display = 'flex';
+    } catch(e) {
+      errEl.textContent = 'Invalid value for ' + fmt + ': ' + e.message;
+      output.style.display = 'none';
+      btns.style.display = 'none';
+    }
+  }, 250);
+}
+
+function downloadBarcode(fmt) {
+  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  const svg = document.getElementById('bc-svg');
+  if (fmt === 'svg') {
+    const data = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([data], {type:'image/svg+xml'});
+    const a = document.createElement('a');
+    a.download = `quicher-barcode-${ts}.svg`;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  } else {
+    const canvas = document.createElement('canvas');
+    const bbox = svg.getBoundingClientRect();
+    canvas.width = svg.viewBox.baseVal.width || bbox.width;
+    canvas.height = svg.viewBox.baseVal.height || bbox.height;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    const data = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([data], {type:'image/svg+xml'});
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0);
+      const a = document.createElement('a');
+      a.download = `quicher-barcode-${ts}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }
+}
+
+// ── Scanner ───────────────────────────────────────────────────────────────────
+let scanStream = null;
+let scanInterval = null;
+
+function toggleCamera() {
+  if (scanStream) {
+    stopCamera();
+  } else {
+    startCamera();
+  }
+}
+
+function startCamera() {
+  const wrap = document.getElementById('scan-video-wrap');
+  const video = document.getElementById('scan-video');
+  const btn = document.getElementById('cam-btn');
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      scanStream = stream;
+      video.srcObject = stream;
+      wrap.style.display = 'block';
+      btn.textContent = 'Stop Camera';
+      btn.className = 'btn btn-secondary';
+      scanInterval = setInterval(scanFrame, 300);
+    })
+    .catch(err => {
+      alert('Camera error: ' + err.message + '\n\nNote: camera requires HTTPS or localhost.');
+    });
+}
+
+function stopCamera() {
+  if (scanStream) {
+    scanStream.getTracks().forEach(t => t.stop());
+    scanStream = null;
+  }
+  if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
+  document.getElementById('scan-video-wrap').style.display = 'none';
+  const btn = document.getElementById('cam-btn');
+  btn.textContent = 'Start Camera';
+  btn.className = 'btn btn-primary';
+}
+
+function scanFrame() {
+  const video = document.getElementById('scan-video');
+  if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+  const canvas = document.getElementById('scan-canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imageData.data, imageData.width, imageData.height);
+  if (code) {
+    showResult(code.data);
+    stopCamera();
+  }
+}
+
+function scanFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.getElementById('scan-canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code) {
+        showResult(code.data);
+      } else {
+        alert('No QR code found in image.');
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function showResult(value) {
+  const result = document.getElementById('scan-result');
+  document.getElementById('scan-value').textContent = value;
+  const isUrl = /^https?:\/\//i.test(value);
+  document.getElementById('open-url-btn').style.display = isUrl ? 'inline-flex' : 'none';
+  result.style.display = 'block';
+  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copyResult() {
+  const val = document.getElementById('scan-value').textContent;
+  navigator.clipboard.writeText(val).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+function openResult() {
+  const val = document.getElementById('scan-value').textContent;
+  window.open(val, '_blank', 'noopener');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderQRForm();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
