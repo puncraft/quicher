@@ -834,7 +834,22 @@ function openResult() {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-renderQRForm();
+const QR_TYPES = ['url','text','wifi','vcard','email','sms','phone'];
+const TABS = ['qr','bc','scan'];
+
+function applyHash() {
+  const hash = location.hash.replace('#','').toLowerCase();
+  if (TABS.includes(hash)) {
+    switchTab(hash);
+  } else if (QR_TYPES.includes(hash)) {
+    switchTab('qr');
+    document.getElementById('qr-type').value = hash;
+    renderQRForm();
+  }
+}
+
+applyHash();
+window.addEventListener('hashchange', applyHash);
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
