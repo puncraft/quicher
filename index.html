@@ -841,9 +841,12 @@ function applyHash() {
   const hash = location.hash.replace('#','').toLowerCase();
   if (TABS.includes(hash)) {
     switchTab(hash);
+    renderQRForm();
   } else if (QR_TYPES.includes(hash)) {
     switchTab('qr');
     document.getElementById('qr-type').value = hash;
+    renderQRForm();
+  } else {
     renderQRForm();
   }
 }
