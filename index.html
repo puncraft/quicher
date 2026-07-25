@@ -24,6 +24,54 @@
       --radius: 10px;
     }
 
+    [data-theme="forest"] {
+      --bg: #0d1a0d;
+      --surface: #122912;
+      --card: #1a3d1a;
+      --accent: #4caf50;
+      --accent2: #80deea;
+      --text: #e8f5e9;
+      --muted: #81c784;
+      --border: #2e5a2e;
+      --success: #a5d6a7;
+    }
+
+    [data-theme="sunset"] {
+      --bg: #1a0a2e;
+      --surface: #2d1b4e;
+      --card: #3d2166;
+      --accent: #ff6b35;
+      --accent2: #ffd166;
+      --text: #f0e6ff;
+      --muted: #b39ddb;
+      --border: #4a2d7a;
+      --success: #c8e6c9;
+    }
+
+    [data-theme="ocean"] {
+      --bg: #001220;
+      --surface: #00293d;
+      --card: #003d5c;
+      --accent: #00b4d8;
+      --accent2: #90e0ef;
+      --text: #e0f7fa;
+      --muted: #80deea;
+      --border: #005780;
+      --success: #80cbc4;
+    }
+
+    [data-theme="slate"] {
+      --bg: #121212;
+      --surface: #1e1e1e;
+      --card: #2a2a2a;
+      --accent: #bb86fc;
+      --accent2: #03dac6;
+      --text: #ffffff;
+      --muted: #aaaaaa;
+      --border: #333333;
+      --success: #03dac6;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg);
@@ -54,6 +102,36 @@
       color: var(--muted);
       margin-top: 2px;
     }
+
+    .theme-picker {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .theme-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .theme-dot:hover { transform: scale(1.2); }
+
+    .theme-dot.active {
+      border-color: var(--text);
+      transform: scale(1.15);
+    }
+
+    .theme-dot[data-t="midnight"] { background: linear-gradient(135deg, #e94560 50%, #53c0f0 50%); }
+    .theme-dot[data-t="forest"]   { background: linear-gradient(135deg, #4caf50 50%, #80deea 50%); }
+    .theme-dot[data-t="sunset"]   { background: linear-gradient(135deg, #ff6b35 50%, #ffd166 50%); }
+    .theme-dot[data-t="ocean"]    { background: linear-gradient(135deg, #00b4d8 50%, #90e0ef 50%); }
+    .theme-dot[data-t="slate"]    { background: linear-gradient(135deg, #bb86fc 50%, #03dac6 50%); }
 
     nav {
       background: var(--surface);
@@ -309,6 +387,13 @@
   <div>
     <h1>Quicher</h1>
     <span>QR &amp; Barcode Toolchest</span>
+  </div>
+  <div class="theme-picker" title="Choose colour scheme">
+    <button class="theme-dot active" data-t="midnight" onclick="setTheme('midnight')" aria-label="Midnight"></button>
+    <button class="theme-dot" data-t="forest"   onclick="setTheme('forest')"   aria-label="Forest"></button>
+    <button class="theme-dot" data-t="sunset"   onclick="setTheme('sunset')"   aria-label="Sunset"></button>
+    <button class="theme-dot" data-t="ocean"    onclick="setTheme('ocean')"    aria-label="Ocean"></button>
+    <button class="theme-dot" data-t="slate"    onclick="setTheme('slate')"    aria-label="Slate"></button>
   </div>
 </header>
 
@@ -832,6 +917,20 @@ function openResult() {
   const val = document.getElementById('scan-value').textContent;
   window.open(val, '_blank', 'noopener');
 }
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+function setTheme(name) {
+  document.documentElement.dataset.theme = name === 'midnight' ? '' : name;
+  document.querySelectorAll('.theme-dot').forEach(d => {
+    d.classList.toggle('active', d.dataset.t === name);
+  });
+  localStorage.setItem('quicher-theme', name);
+}
+
+(function initTheme() {
+  const saved = localStorage.getItem('quicher-theme') || 'midnight';
+  setTheme(saved);
+})();
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 const QR_TYPES = ['url','text','wifi','vcard','email','sms','phone'];
